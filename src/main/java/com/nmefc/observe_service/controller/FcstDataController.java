@@ -112,6 +112,40 @@ public class FcstDataController {
      * @param days
      * @return
      */
+    @GetMapping("/getData")
+    public LoadOneFcstResult getData(Integer days){
+        LoadOneFcstResult loadOneFcstResult = new LoadOneFcstResult();
+        CommonResultCode commonResultCode = new CommonResultCode();
+        //传入参数为空时，返回错误信息
+        if(null == days){
+            return errorParameterMessage(loadOneFcstResult,commonResultCode);
+        }
+        if(31 < days){
+            return errorDateRange(loadOneFcstResult,commonResultCode);
+        }
+        List<FcstData> fcstDataList = null;
+        try {
+            fcstDataList = fcstService.queryAllByTime(days);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        //数据库未查到时
+        if (null == fcstDataList || fcstDataList.size() < 1){
+            return nullDataMessage(loadOneFcstResult,commonResultCode, "最近" + days.toString() + "天");
+        }
+
+        commonResultCode.setCode("100");
+        commonResultCode.setMessage("查询成功");
+        loadOneFcstResult.setCommonResultCode(commonResultCode);
+        loadOneFcstResult.setFcstDataList(fcstDataList);
+        return loadOneFcstResult;
+    }
+    /**
+     * 获取指定浮标，最近days天（days为传入参数）的浮标数据
+     * @param name
+     * @param days
+     * @return
+     */
     @GetMapping("/lastSingle")
     public LoadOneFcstResult lastSingleData(Integer days, String name){
         LoadOneFcstResult loadOneFcstResult = new LoadOneFcstResult();
@@ -228,6 +262,7 @@ public class FcstDataController {
         loadOneFcstResult.setFcstDataList(filterList);
         return loadOneFcstResult;
     }
+
     private LoadOneFcstResult errorParameterMessage(LoadOneFcstResult loadOneFcstResult, CommonResultCode commonResultCode) {
         commonResultCode.setCode("400");
         commonResultCode.setMessage("参数错误, 请联系系统管理员");
@@ -254,5 +289,6 @@ public class FcstDataController {
         statisticsResult.setCommonResultCode(commonResultCode);
         return statisticsResult;
     }
+
 
 }

@@ -19,6 +19,7 @@ public class FcstDataServiceImp implements FcstService {
     FcstDataMapper fcstDataMapper;
     @Override
     public List<FcstData> getDataByQuery(FcstDataExample fcstDataExample) {
+        fcstDataExample.setOrderByClause("query_time ASC");
         return fcstDataMapper.selectByExample(fcstDataExample);
     }
 
@@ -29,7 +30,7 @@ public class FcstDataServiceImp implements FcstService {
 
         //TODO：生产环境中需要注释：开发环境指定当前日期
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date start = dateFormat.parse("2022-12-23 01:00:00");
+        Date start = dateFormat.parse("2022-12-18 01:00:00");
 
         //TODO：生产环境中需要取消此注释：获取当前日期
 //        Date start = new Date();
@@ -71,7 +72,7 @@ public class FcstDataServiceImp implements FcstService {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         //TODO：生产环境中需要注释：开发环境指定当前日期
-        Date start = dateFormat.parse("2022-12-23 01:00:00");
+        Date start = dateFormat.parse("2022-12-18 01:00:00");
 
         //TODO：生产环境中需要取消此注释：获取当前日期
 //        String datestr = dateFormat.format(new Date());
@@ -115,7 +116,7 @@ public class FcstDataServiceImp implements FcstService {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH");
 
         //TODO：生产环境中需要注释：开发环境指定当前日期
-        Date start = dateFormat.parse("2022-12-23 01:00:00");
+        Date start = dateFormat.parse("2022-12-18 01:00:00");
 
         //TODO：生产环境中需要取消此注释：获取当前日期
 //        String datestr = dateFormat.format(new Date());
@@ -160,6 +161,38 @@ public class FcstDataServiceImp implements FcstService {
         }
         return fcstDataArrayList;
     }
+
+    @Override
+    public List<FcstData> queryAllByTime(Integer days) throws ParseException {
+        List<FcstData> fcstDataArrayList = new ArrayList<>();
+
+        //TODO：生产环境中需要注释：开发环境指定当前日期
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date start = dateFormat.parse("2022-12-18 01:00:00");
+
+        //TODO：生产环境中需要取消此注释：获取当前日期
+//        Date start = new Date();
+
+        //创建Calendar实例
+        Calendar cal = Calendar.getInstance();
+        //设置当前时间
+        cal.setTime(start);
+        cal.set(Calendar.DATE, cal.get(Calendar.DATE) + days);
+        //获取days天前的日期：此时start为当前系统时间，end为days天前时间
+        Date end = cal.getTime();
+
+
+        FcstDataExample fcstDataExample = new FcstDataExample();
+        FcstDataExample.Criteria criteria =  fcstDataExample.createCriteria();
+        criteria.andQueryTimeBetween(start,end);
+        try{
+            fcstDataArrayList = getDataByQuery(fcstDataExample);
+        }catch (Exception e){
+            throw e;
+        }
+        return fcstDataArrayList;
+    }
+
     /**
      * 获取指定浮标的指定时间段的数据
      * @param end

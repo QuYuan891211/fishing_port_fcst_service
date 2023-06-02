@@ -62,4 +62,7 @@ public interface FcstService extends BaseService<FcstData, FcstDataExample> {
      * @return
      */
     List<FcstData> queryAll(Date time);
+
+
+    List<FcstData> queryAllByTime(Integer days) throws ParseException;
 }
