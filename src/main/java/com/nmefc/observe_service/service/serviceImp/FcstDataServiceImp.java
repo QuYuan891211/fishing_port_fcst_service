@@ -3,22 +3,26 @@ package com.nmefc.observe_service.service.serviceImp;
 //import com.nmefc.observice_service.bean.responseBean.middleBean.LastSingleFcstData;
 import com.nmefc.observe_service.bean.FcstData;
 import com.nmefc.observe_service.bean.FcstDataExample;
+import com.nmefc.observe_service.bean.middleBean.HomeQueryResult;
+import com.nmefc.observe_service.bean.middleBean.TimeLevelResult;
 import com.nmefc.observe_service.mapper.FcstDataMapper;
 import com.nmefc.observe_service.service.FcstService;
 import com.nmefc.observe_service.service.FcstService;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service("fcstDataService")
 public class FcstDataServiceImp implements FcstService {
     @Autowired
     FcstDataMapper fcstDataMapper;
     String testDate1 = "2022-12-18 01:00:00";
-    String testDate2 = "2023-01-01 20:00:00";
+    String testDate2 = "2023-01-01 20:00:20";
     @Override
     public List<FcstData> getDataByQuery(FcstDataExample fcstDataExample) {
         fcstDataExample.setOrderByClause("query_time ASC");
@@ -169,7 +173,7 @@ public class FcstDataServiceImp implements FcstService {
         List<FcstData> fcstDataArrayList = new ArrayList<>();
 
         //TODO：生产环境中需要注释：开发环境指定当前日期
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH");
         Date start = dateFormat.parse(testDate2);
 
         //TODO：生产环境中需要取消此注释：获取当前日期
@@ -241,5 +245,75 @@ public class FcstDataServiceImp implements FcstService {
     return filterList;
     }
 
+    public List<HomeQueryResult> timeLevelStatic(List<FcstData> fcstDataList, List<Integer> interval){
+        List<HomeQueryResult> homeQueryResultList = new ArrayList<>();
+
+        Map<String, List<FcstData>> map = fcstDataList.stream().collect(Collectors.groupingBy(
+                FcstData::getSite));
+        for (Map.Entry<String, List<FcstData>> entry : map.entrySet()) {
+            String mapKey = entry.getKey();
+            List<FcstData> mapValue = entry.getValue();
+            List<TimeLevelResult> timeLevelResultList = new ArrayList<>();
+            for(Integer timeLevel : interval){
+                TimeLevelResult timeLevelResult = findMaxAndMinByTimeLevel(mapValue,timeLevel);
+                if(null != timeLevelResult){
+                    timeLevelResultList.add(timeLevelResult);
+                }
+            }
+            if(timeLevelResultList.size() == 0){
+                return null;
+            }
+            HomeQueryResult homeQueryResult = new HomeQueryResult();
+            homeQueryResult.setSite(mapKey);
+            homeQueryResult.setTimeLevelResultList(timeLevelResultList);
+            homeQueryResultList.add(homeQueryResult);
+        }
+
+        return homeQueryResultList;
+    }
+
+    /**
+     * 仅用于逐时的数据, 此处fcstDataList需为同一个站点的
+     * @param fcstDataList
+     * @param timeLevel
+     * @return
+     */
+    private TimeLevelResult findMaxAndMinByTimeLevel(List<FcstData> fcstDataList, Integer timeLevel){
+        Map<String, List<FcstData>> map = fcstDataList.stream().collect(Collectors.groupingBy(
+                FcstData::getSite));
+        //如果不是唯一site,返回空值
+            if(1 != map.size()){
+                return null;
+            }
+
+        List<FcstData> sortedFcstDataList = fcstDataList.stream().sorted(Comparator.comparing(FcstData::getQueryTime))
+                .collect(Collectors.toList());
+
+        Date start = sortedFcstDataList.get(0).getQueryTime();
+        //创建Calendar实例
+        Calendar cal = Calendar.getInstance();
+        //设置当前时间
+        cal.setTime(start);
+        cal.set(Calendar.HOUR_OF_DAY, cal.get(Calendar.HOUR_OF_DAY) + timeLevel);
+        //获取days天前的日期：此时start为当前系统时间，end为days天前时间
+        Date staticEnd = cal.getTime();
+
+        Calendar cal2 = Calendar.getInstance();
+        //设置当前时间
+        cal2.setTime(staticEnd);
+        cal2.set(Calendar.DATE, cal.get(Calendar.DATE) - 1);
+
+        Date staticStart = cal2.getTime();
+
+        List<FcstData> filterList = fcstDataList.stream().filter(s-> -1 < s.getQueryTime().compareTo(staticStart) && 1 > s.getQueryTime().compareTo(staticEnd)).collect(Collectors.toList());
+        if(null == filterList || filterList.size() == 0){
+            return null;
+        }
+//        String site = filterList.get(0).getSite();
+        BigDecimal ybgMax = filterList.stream().max(Comparator.comparing(FcstData::getYbg)).get().getYbg();
+        BigDecimal ybgMin = filterList.stream().min(Comparator.comparing(FcstData::getYbg)).get().getYbg();
+        TimeLevelResult timeLevelResult = new TimeLevelResult(timeLevel,ybgMax,ybgMin);
+        return timeLevelResult;
+    }
 
 }

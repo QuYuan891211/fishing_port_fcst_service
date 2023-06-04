@@ -1,7 +1,9 @@
 package com.nmefc.observe_service.controller;
 
 import com.nmefc.observe_service.bean.FcstData;
+import com.nmefc.observe_service.bean.middleBean.HomeQueryResult;
 import com.nmefc.observe_service.bean.responseBean.CommonResultCode;
+import com.nmefc.observe_service.bean.responseBean.LoadFcstResultByTimeLevel;
 import com.nmefc.observe_service.bean.responseBean.LoadOneFcstResult;
 import com.nmefc.observe_service.bean.responseBean.StatisticsResult;
 import com.nmefc.observe_service.service.FcstService;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -113,13 +116,24 @@ public class FcstDataController {
      * @return
      */
     @GetMapping("/getData")
-    public LoadOneFcstResult getData(Integer days){
+    public LoadOneFcstResult getData(Integer days, Integer intervalMax){
         LoadOneFcstResult loadOneFcstResult = new LoadOneFcstResult();
         CommonResultCode commonResultCode = new CommonResultCode();
-        //传入参数为空时，返回错误信息
-        if(null == days){
+        if(intervalMax%24 != 0){
             return errorParameterMessage(loadOneFcstResult,commonResultCode);
         }
+
+        List<Integer> interval = new ArrayList<>();
+        for(Integer i = 0; i<=intervalMax; i +=24){
+            interval.add(i);
+        }
+        if(null == days || null == interval){
+            return errorParameterMessage(loadOneFcstResult,commonResultCode);
+        }
+//        LoadFcstResultByTimeLevel loadFcstResultByTimeLevel = new LoadFcstResultByTimeLevel()
+
+        //传入参数为空时，返回错误信息
+
         if(31 < days){
             return errorDateRange(loadOneFcstResult,commonResultCode);
         }
@@ -129,11 +143,12 @@ public class FcstDataController {
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
-        //数据库未查到时
         if (null == fcstDataList || fcstDataList.size() < 1){
             return nullDataMessage(loadOneFcstResult,commonResultCode, "最近" + days.toString() + "天");
         }
 
+        List<HomeQueryResult> homeQueryResultList = fcstService.timeLevelStatic(fcstDataList, interval);
+        loadOneFcstResult.setHomeQueryResultList(homeQueryResultList);
         commonResultCode.setCode("100");
         commonResultCode.setMessage("查询成功");
         loadOneFcstResult.setCommonResultCode(commonResultCode);

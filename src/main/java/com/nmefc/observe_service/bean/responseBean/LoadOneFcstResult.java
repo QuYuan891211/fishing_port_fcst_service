@@ -3,11 +3,21 @@ package com.nmefc.observe_service.bean.responseBean;
 //import com.nmefc.observice_service.bean.responseBean.middleBean.LastSingleBuoyData;
 
 import com.nmefc.observe_service.bean.FcstData;
+import com.nmefc.observe_service.bean.middleBean.HomeQueryResult;
 
 import java.util.List;
 
 public class LoadOneFcstResult {
 
+    public List<HomeQueryResult> homeQueryResultList;
+
+    public List<HomeQueryResult> getHomeQueryResultList() {
+        return homeQueryResultList;
+    }
+
+    public void setHomeQueryResultList(List<HomeQueryResult> homeQueryResultList) {
+        this.homeQueryResultList = homeQueryResultList;
+    }
 
     public List<FcstData> getFcstDataList() {
         return fcstDataList;

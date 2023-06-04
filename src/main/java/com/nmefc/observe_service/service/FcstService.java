@@ -4,6 +4,7 @@ package com.nmefc.observe_service.service;
 
 import com.nmefc.observe_service.bean.FcstData;
 import com.nmefc.observe_service.bean.FcstDataExample;
+import com.nmefc.observe_service.bean.middleBean.HomeQueryResult;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -65,4 +66,11 @@ public interface FcstService extends BaseService<FcstData, FcstDataExample> {
 
 
     List<FcstData> queryAllByTime(Integer days) throws ParseException;
+
+    /**
+     * 统计各个预报时次的最大的有效波高和最小的有效波高
+     * @param fcstDataList
+     * @return
+     */
+    List<HomeQueryResult> timeLevelStatic(List<FcstData> fcstDataList, List<Integer> interval);
 }
