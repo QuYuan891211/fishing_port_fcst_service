@@ -35,7 +35,7 @@ public class FcstDataServiceImp implements FcstService {
         List<FcstData> fcstDataArrayList = new ArrayList<>();
 
         //TODO：生产环境中需要注释：开发环境指定当前日期
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH");
         Date start = dateFormat.parse(testDate2);
 
         //TODO：生产环境中需要取消此注释：获取当前日期
@@ -268,6 +268,16 @@ public class FcstDataServiceImp implements FcstService {
             homeQueryResult.setTimeLevelResultList(timeLevelResultList);
             homeQueryResultList.add(homeQueryResult);
         }
+
+
+
+
+
+
+
+
+
+
 
         return homeQueryResultList;
     }
